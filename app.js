@@ -6,10 +6,15 @@
 var express = require('express')
   , routes = require('./routes')
   , http = require('http')
-  , path = require('path');
+  , path = require('path')
+  , mysql = require('mysql')
+  , config = require('./config.js');
 
 var app = express();
+console.log(config)
+var connection = mysql.createConnection(config.db);
 
+connection.connect(function(err) {  });
 
 app.configure(function(){
   app.set('port', process.env.PORT || 3000);
@@ -31,8 +36,14 @@ app.configure('development', function(){
 
 app.get('/', routes.index);
 
-app.get('/recipes', function(req, res) {
-    res.send(data);
+app.get('/api/clipboards', function(req, res) {
+  connection.query(
+    'SELECT * FROM '+config.schemas.CLIPBOARDS+' WHERE listable = 1 ORDER BY created DESC', 
+    function(err, results) {
+      console.log(err, results);
+      res.send(results);
+    }
+  );
 });
 
 http.createServer(app).listen(app.get('port'), function(){

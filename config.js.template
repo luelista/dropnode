@@ -1,0 +1,20 @@
+/*
+ * dropnode configuration template
+ */
+
+exports.db = {
+    type: 'mysql',
+    host: 'localhost',
+    user: 'my_database_user',
+    password: 'my_database_password',
+    name: 'twcore',
+    prefix: 'twiki_'
+  };
+exports.schemas = {
+    CLIPBOARDS: 'clipboard',
+    COMMENTS: 'clipcomment',
+    BOOKMARKS: 'clipfav',
+    INVITES: 'clipinvite',
+    ITEMS: 'clipitem',
+    EVENTS: 'clipevent'
+  };

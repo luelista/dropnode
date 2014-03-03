@@ -1,9 +1,9 @@
 App = Ember.Application.create();
 
 App.Router.map(function() {
+  //this.resource('index');
   this.resource('clipboards');
   this.resource('clipboard', { path: ':name' });
-  this.resource('index');
   
 });
 
