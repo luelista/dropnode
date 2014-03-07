@@ -7,14 +7,21 @@ exports.db = {
     host: 'localhost',
     user: 'my_database_user',
     password: 'my_database_password',
-    name: 'twcore',
-    prefix: 'twiki_'
+    name: 'dropnode',
+    prefix: 'dn_'
   };
+  
+exports.security = {
+  password_salt: '...enter some long, random string in here',
+  password_hash: 'sha256'
+};
+
 exports.schemas = {
-    CLIPBOARDS: 'clipboard',
-    COMMENTS: 'clipcomment',
-    BOOKMARKS: 'clipfav',
-    INVITES: 'clipinvite',
-    ITEMS: 'clipitem',
-    EVENTS: 'clipevent'
+    CLIPBOARDS: 'clipboards',
+    COMMENTS: 'comments',
+    BOOKMARKS: 'bookmarks',
+    INVITES: 'invites',
+    ITEMS: 'clipitems',
+    EVENTS: 'events',
+    USERS: 'users'
   };
