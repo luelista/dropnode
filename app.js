@@ -19,6 +19,7 @@ for (var k in config.schemas) {
 }
 
 var app = express();
+var contentsApp = express();
 
 config.db.multipleStatements = true;
 var connection = mysql.createConnection(config.db);
@@ -29,6 +30,8 @@ app.configure(function(){
   app.set('port', process.env.PORT || config.server.http_port || 3000);
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
+  console.log("registering contents vhost on '"+config.server.contents_host+"'...");
+  app.use(express.vhost(config.server.contents_host, contentsApp));
   app.use(express.favicon());
   app.use(express.logger('dev'));
   app.use(express.bodyParser());
@@ -108,7 +111,7 @@ app.get('/api/v1/clipboards', function(req, res) {
     }
   );
 });
-
+/*
 app.get('/api/v1/clipboard/:owner/:name', function(req, res) {
   if (!req.authorized || req.authorized.username != req.params.owner) {
     res.send({ error : "forbidden" });
@@ -139,15 +142,55 @@ app.get('/api/v1/clipboard/:owner/:name', function(req, res) {
     }
   );
 });
+*/
+app.get('/api/v1/clipboards/:id/items', function(req, res) {
+  if (!req.authorized) {
+    res.send({ error : "forbidden" });
+    return;
+  }
+      
+      connection.query(
+        'SELECT cid id, title,filename,url_filename,server_filespec,created_by,created,lastmodified_by,lastmodified,filetype,subtype,filesize \
+         FROM '+SCH.ITEMS+' WHERE cbid = ? AND deleted = 0 ORDER BY created DESC ', 
+        [req.params.id],
+        function(err, itemsr) {
+          if (err) { res.status(500); res.send({error: err}); return; } 
+          
+          res.send({ items: itemsr });
+        }
+      );
+      
+});
+app.get('/api/v1/nodeconfig', function(req, res) {
+  var conf = {
+      contents_root: 'https://' + config.server.contents_host
+  };
+  res.setHeader("Content-Type", "text/javascript");
+  res.send("// Config JSONP\n\nApp = App || {};\n\nApp.ServerConfig = " + JSON.stringify(conf));
+  
+})
 
 app.use(routes.index);
 
 app.use(routes.err404);
 
+//--> vhost for content serving
+
+contentsApp.configure(function(){
+  contentsApp.set('views', __dirname + '/views');
+  contentsApp.set('view engine', 'jade');
+});
+
+contentsApp.use(express.static(config.server.contents_path));
+contentsApp.use(routes.err404);
+
+//--> run the server!
+
 http.createServer(app).listen(app.get('port'), function(){
   console.log("Express server listening on port " + app.get('port'));
 });
 
+//--> helpers
 
 function hashPassword(str) {
   return hash(config.security.password_hash, config.security.password_salt + str);

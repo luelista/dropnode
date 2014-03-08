@@ -3,25 +3,31 @@
  */
 
 exports.db = {
-    type: 'mysql',
-    host: 'localhost',
-    user: 'my_database_user',
-    password: 'my_database_password',
-    name: 'dropnode',
-    prefix: 'dn_'
-  };
-  
+  type: 'mysql',
+  host: 'localhost',
+  user: 'my_database_user',
+  password: 'my_database_password',
+  name: 'dropnode',
+  prefix: 'dn_'
+};
+
+exports.server = {
+  app_host: 'app.dropnode.example.net',
+  contents_host: 'dat.dropnode.example.net',
+  contents_path: '/tmp/dropnode_contents'
+};
+
 exports.security = {
   password_salt: '...enter some long, random string in here',
   password_hash: 'sha256'
 };
 
 exports.schemas = {
-    CLIPBOARDS: 'clipboards',
-    COMMENTS: 'comments',
-    BOOKMARKS: 'bookmarks',
-    INVITES: 'invites',
-    ITEMS: 'clipitems',
-    EVENTS: 'events',
-    USERS: 'users'
-  };
+  CLIPBOARDS: 'clipboards',
+  COMMENTS: 'comments',
+  BOOKMARKS: 'bookmarks',
+  INVITES: 'invites',
+  ITEMS: 'clipitems',
+  EVENTS: 'events',
+  USERS: 'users'
+};

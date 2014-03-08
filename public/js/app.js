@@ -92,7 +92,15 @@ App.ClipboardsNewRoute = Ember.Route.extend({
 
 App.ClipboardRoute = Ember.Route.extend({
   model: function(params) {
-    return this.store.find('clipboard', { owner: params.owner, name: params.name });
+    console.log("model called",params);
+    return new Promise(function(resolve, reject){
+        var cb = App.Store.find('clipboard', { owner: params.owner, name: params.name });
+        
+        cb.then(function() {
+          console.log("cb resolve", cb.get("firstObject"))
+          resolve(cb.get("firstObject"));
+        }, reject);
+      });
     /*return Em.Deferred.promise(function (p) {
       p.resolve($.get("/api/v1/clipboard/" + params.owner + "/" + params.name).then(function(response) {
         return App.Store.createRecord('clipboard', response.clipboard);
@@ -103,6 +111,13 @@ App.ClipboardRoute = Ember.Route.extend({
   serialize: function(model) {
     // this will make the URL `/posts/foo-post`
     return { owner: model.get('owner.username'), name: model.get('name') };
+  }
+});
+
+App.ClipboardIndexRoute = Ember.Route.extend({
+  model: function(params) {
+    console.log("model (2) called",params);
+    return this.modelFor("clipboard");
   }
 });
 
@@ -133,7 +148,7 @@ App.Clipboard = DS.Model.extend({
   description:      DS.attr('string'),
   state:            DS.attr('string'),
   viewmode:         DS.attr('string'),
-  items:            DS.hasMany('item')
+  items:            DS.hasMany('item', { async: true })
 });
 
 App.Item = DS.Model.extend({
@@ -142,7 +157,15 @@ App.Item = DS.Model.extend({
   title:            DS.attr('string'),
   filename:         DS.attr('string'),
   url_filename:     DS.attr('string'),
-  server_filespec:  DS.attr('string')
+  server_filespec:  DS.attr('string'),
+  filetype:         DS.attr('string'),
+  subtype:          DS.attr('string'),
+  url:              Ember.computed(function() {
+    return App.ServerConfig.contents_root + '/' + this.get("server_filespec");
+  }).property("url_filename"),
+  showThumbnail:              Ember.computed(function() {
+    return this.get("filetype") == "photo";
+  }).property("filetype")
 });
 
 App.ApiToken = Ember.Object.extend({
@@ -241,3 +264,10 @@ DS.rejectionHandler = function(reason) {
   }
   throw reason;
 };
+
+Ember.Handlebars.registerHelper('ifeq', function(a, b, options) {
+  return Ember.Handlebars.bind.call(options.contexts[0], a, options, true, function(result) {
+    console.log("ifeq",result,b);
+    return result === b;
+  });
+});
