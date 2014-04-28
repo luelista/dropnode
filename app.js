@@ -65,13 +65,13 @@ app.get('/api/v1/session', function( req, res ) {
   res.send({ api_key:  { access_token: "asdf" } });
 });
 app.get('/api/v1/users/:id', middleware.requireauth, function( req, res ) {
-  if (req.params.id != req.authorized.id) {
+  if (req.params.id != req.authorized.id && req.params.id != req.authorized.username) {
     res.status(403);
     res.send({ error: "forbidden" });
     return;
   }
-  connection.query('SELECT id,username,fullname,email FROM '+SCH.USERS+' WHERE id = ?',
-  [req.params.id], function(err, results) {
+  connection.query('SELECT id,username,fullname,email,profile_image FROM '+SCH.USERS+' WHERE id = ? OR username = ?',
+  [req.params.id, req.params.id], function(err, results) {
     if (results) {
       res.send({ user: results[0] });
     } else {

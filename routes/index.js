@@ -9,7 +9,7 @@ exports.index = function(req, res, next){
     next(); return;
   }
   //res.render('index');
-  res.sendfile('index.html');
+  res.sendfile('public/index.html');
 };
 
 exports.err404 = function(req, res, next){

@@ -1,0 +1,272 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>dröpme.de</title>
+    <link rel="stylesheet" href="/css/foundation.css" />
+    <script src="/js/vendor/modernizr.js"></script>
+  </head>
+  <body>
+    
+  		<nav class="top-bar" data-topbar>
+  		  
+  		</nav>
+  
+      <div id="main-content"></div>
+
+		<script type="text/x-template" id="template-mainMenu">
+			<ul class="title-area">
+				<li class="name">
+					<h1><a href="/" class="internal-link">dropme.de</a></h1>
+				</li>
+				<li class="toggle-topbar menu-icon"><a href="#">Menu</a></li>
+			</ul>
+		
+			<section class="top-bar-section">
+				<!-- Right Nav Section -->
+				<ul class="right">
+					<%= linkTo("clipboard_new", "/new", null, "li", "Neues Clipboard") %>
+					<%= linkTo("index", "/", null, "li", "<b>Home</b>") %>
+					
+		
+					<% if(isAuthenticated && currentUser) { %>
+						<%= linkTo("user_profile", "/user/:username", currentUser, "li", currentUser.get('fullname')) %>
+						<li><a href="javascript://" class="action-logout">Logout</a></li>
+					<% } else { %>
+						<%= linkTo("session_new", "/session/new", null, "li", "Einloggen / Account erstellen") %>
+					<% } %>
+				</ul>
+		
+				<!-- Left Nav Section -->
+				<ul class="left">
+					<li class="has-dropdown">
+						<a href="#"><%= currentClipboard ? currentClipboard.name : "Clipboards" %></a>
+						<ul class="dropdown clipboard-list">
+							<li><a href="#">placeholder...</a></li>
+						</ul>
+					</li>
+				</ul>
+			</section>
+		</script>
+
+    <script type="text/x-template" id="template-fourOhFour">
+      <br><br>
+      <div class="row">
+        <div class="large-12 columns">
+          <div class="alert-box warning">
+            <h2>404 Page Not Found</h2>
+            <p>The page you requested was not found.</p>
+          </div>
+        </div>
+      </div>
+    </script>
+
+    <script type="text/x-template" id="template-loadIndicator">
+      <br><br>
+      <div class="row">
+        <div class="large-12 columns">
+          <div class="alert-box warning">
+            <h2>Loading, please wait...</h2>
+            
+          </div>
+        </div>
+      </div>
+    </script>
+    
+    <script type="text/x-template" id="template-clipboardList">
+          <% model.each(function(item) { %>
+          <li><a href="/c/<%= item.get('name') %>" data-id="<%= item.get('cid') %>"><%= item.get('description') %></a></li>
+          <% }); %>
+    </script>
+
+    <script type="text/x-template" id="template-clipboards">
+      <div class="row">
+        <div class="large-4 columns">
+        <h3>Clipboards</h2>
+        <ul class="side-nav clipboard-list">
+          
+        </ul>
+
+    	  </div> 
+        <div class="large-8 columns">
+        <div class="clipcontent"></div>
+    	  </div>        
+      </div>
+    </script>
+
+    <script type="text/x-handlebars" id="template-clipboardNew">
+      <div class="row">
+				<h3>Create New Clipboard</h3>
+				<form >
+					<div>
+						<label>Clipboard name</label>
+						<input type="text" name=clipboard_name placeholder="your-clipboard-name">
+					</div>
+		
+					<br>
+					<button type="submit">Create</button>
+				</form>
+			</div>
+    </script>
+
+    <script type="text/x-handlebars" id="template-clipboardContent">
+    <br>
+    <h3><%= cb.name %></h3>
+    <h4><%= cb.description %></h4>
+    
+    <% cb.items.each(function(item) { %>
+    <li><a href="/c/<%= item.get('name') %>" data-id="<%= item.get('cid') %>"><%= item.get('description') %></a></li>
+    
+    <li>
+    <% if(item.filetype == "photo") { %>
+    <img src="<%= item.url %>" alt="<%= item.filename %>" title="<%= item.title %>" style="width:150px"><br>
+    <% } /*end If*/ %>
+    
+    <%= item.filename %>
+    </li>
+    <% }); /*end Each*/ %>
+    </script>
+    
+    <script type="text/x-template" id="template-sessionNew">
+      <div class="row">
+        <div class="large-4 columns login-form">
+          
+    	  </div>
+        <div class="large-4 columns register-form">
+          <h3>Jetzt registrieren</h3>
+					
+					<p>asdf</p>
+    	  </div>   
+        <div class="large-4 columns">
+          <p>asdf</p>
+					<ul class="pricing-table">
+						<li class="title">Standard</li>
+						<li class="price">$9.99</li>
+						<li class="description">An awesome description</li>
+						<li class="bullet-item">1 Database</li>
+						<li class="bullet-item">5GB Storage</li>
+						<li class="bullet-item">20 Users</li>
+						<li class="cta-button"><a class="button" href="#">Buy Now</a></li>
+					</ul>
+    	  </div>        
+      </div>
+    </script>
+    
+    <script type="text/x-template" id="template-loginForm">
+          <h3>Login</h3>
+          
+          <div class="errmes alert-box warning"></div>
+          
+          <form>
+            <div>
+              <label>Username or Email
+              <input type="text" name=username_or_email placeholder="Username or Email Address"></label>
+            </div>
+
+            <div>
+              <label>Password
+              <input type="password" name=password placeholder="Password"></label>
+            </div>
+
+            <br>
+            <button type="submit">Submit</button>
+          </form>
+    </script>
+    
+    <script type="text/x-handlebars" id="template-dashboard">
+      
+    </script>
+    <script type="text/x-handlebars" id="template-indexNologin">
+
+  
+      <div class="row">
+        <div class="large-12 columns">
+      	  <div class="panel">
+            
+            <div class="row">
+          	  <div class="large-8 medium-8 columns">
+
+                <h3>Texte, Bilder und Dateien übertragen und teilen</h3>
+                <p>Probiere es jetzt aus, du musst dich dazu nicht anmelden. Wähle einfach einen beliebigen Clipboard-Namen aus oder lass den zufällig generierten Code darin stehen!</p>
+                <p>Nach dem Klick auf Weiter kannst du Dateien hochladen und Texte speichern.</p>
+              </div>
+          	  <div class="large-4 medium-4 columns login-form">
+          		  
+          	  </div>        
+    			  </div>
+            
+            
+            <div class="row">
+          	  <div class="large-4 medium-4 columns">
+
+
+                <p><b>Web-Clipboard</b></p> <p>
+                  Mit DropMe kannst du Texte, Bilder und beliebige andere Dateien zwischen
+                deinen Geräten übertragen: über den Web-Browser, mit <a href="/mw/dropme-official/README.html">praktischen Apps für Windows, Linux, Android und Google Chrome</a>.
+                </p>
+
+                
+      	      </div>
+          	  <div class="large-4 medium-4 columns">
+                <p><b>Entwürfe, Code-Snippets, Screenshots und vieles mehr</b></p> <p>
+                DropMe unterstützt viele Dateitypen und zeigt eine intelligente Vorschau an.
+                <a href="/mw/dropme-official/SUPPORTED-FILETYPES.html">Hier findest du die Liste der unterstützten Dateitypen.</a>
+                </p>
+          		  
+          	  </div>
+          	  <div class="large-4 medium-4 columns ">
+                <p><b>Teilen und verteilen</b></p> <p>
+                Poste Links auf Dateien, Bilder und Texte in soziale Netze wie Facebook und Twitter. Lass dich auf DropMe.de
+                oder per Mail informieren, wenn deine Freunde Dateien öffentlich hochladen.
+                </p>
+          		  
+          	  </div>        
+    			  </div>
+
+      	  </div>
+          
+    	  </div>        
+      </div>
+    </script>
+    
+    <script type="text/x-handlebars" id="template-userProfile">
+
+      <div class="row">
+        <div class="large-12 columns">
+      	  <div class="panel">
+            <a href="#" class="th" style="float:right"><img src="<%= user.profile_image %>"></a>
+            <h3>Welcome, <%= user.fullname %> </h3>
+            <p>...dies ist das Benutzerprofil</p>
+            <div class="row">
+          	  <div class="large-6 medium-6 columns">
+      		      <h4>Liste aller Clipboards</h4>
+								<ul class="clipboard-list">
+									
+								</ul>
+      	      </div>
+          	  <div class="large-6 medium-6 columns">
+          		  <h4>Persönliche Daten</h4>
+								<p><b>Benutzername: </b> <%= user.username %></p>
+								<p><b>Name: </b> <%= user.fullname %></p>
+								<p><b>E-Mail: </b> <%= user.email %></p>
+								<p><b>ID: </b> <%= user.id %></p>
+          	  </div>     
+    			  </div>
+
+      	  </div>
+    	  </div>        
+      </div>
+    </script>
+    
+    <script src="/js/libs/jquery-1.10.2.js"></script>
+    <script src="/js/libs/jquery.cookie.js"></script>
+    <script src="/js/libs/underscore.js"></script>
+    <script src="/js/libs/backbone.js"></script>
+    <script src="/js/routing.js"></script>
+    <script src="/js/views.js"></script>
+    <script src="/js/glue.js"></script>
+    <script src="/api/v1/nodeconfig"></script>
+    <script src="/js/foundation.min.js"></script>
+  </body>
+</html>
