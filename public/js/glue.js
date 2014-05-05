@@ -2,16 +2,14 @@
 $(function(){
   new Dropme.Error404Router();
   
-  
   if (window.localStorage && window.localStorage.apiKey) {
     App.login(JSON.parse(window.localStorage.apiKey), function(){});
   }
   
   App.router = new Dropme.WorkspaceRouter();
   App.clipboards = new Dropme.ClipboardCollection();
-  new Dropme.MainMenu({el: $('nav.top-bar')});
+  App.mainMenu = new Dropme.MainMenu({el: $('nav.top-bar')});
   
-
   App.loadIndicator = new Dropme.LoadIndicator({el: $('#main-content')});
   App.userProfile = new Dropme.UserProfile({el: $('#main-content')});
   App.indexPage = new Dropme.IndexPage({el: $('#main-content')});

@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>dröpme.de</title>
     <link rel="stylesheet" href="/css/foundation.css" />
+    <link rel="stylesheet" href="/css/dropme.css" />
     <script src="/js/vendor/modernizr.js"></script>
   </head>
   <body>
@@ -46,6 +47,11 @@
 							<li><a href="#">placeholder...</a></li>
 						</ul>
 					</li>
+          
+          <% _.each(breadCrumb, function(item) { %>
+            <li><a href='#'><%= item.text %></a></li>
+          <% }); %>
+          
 				</ul>
 			</section>
 		</script>
@@ -76,24 +82,10 @@
     
     <script type="text/x-template" id="template-clipboardList">
           <% model.each(function(item) { %>
-          <li><a href="/c/<%= item.get('name') %>" data-id="<%= item.get('cid') %>"><%= item.get('description') %></a></li>
+          <li><a href="/c/<%= item.get('username') %>/<%= item.get('name') %>" data-internal="c/<%= item.get('username') %>/<%= item.get('name') %>" data-id="<%= item.get('cid') %>"><%= item.get('description') %></a></li>
           <% }); %>
     </script>
 
-    <script type="text/x-template" id="template-clipboards">
-      <div class="row">
-        <div class="large-4 columns">
-        <h3>Clipboards</h2>
-        <ul class="side-nav clipboard-list">
-          
-        </ul>
-
-    	  </div> 
-        <div class="large-8 columns">
-        <div class="clipcontent"></div>
-    	  </div>        
-      </div>
-    </script>
 
     <script type="text/x-handlebars" id="template-clipboardNew">
       <div class="row">
@@ -112,20 +104,47 @@
 
     <script type="text/x-handlebars" id="template-clipboardContent">
     <br>
+    <div class="large-6 columns ">
+  <!--
     <h3><%= cb.name %></h3>
     <h4><%= cb.description %></h4>
+  -->
     
-    <% cb.items.each(function(item) { %>
-    <li><a href="/c/<%= item.get('name') %>" data-id="<%= item.get('cid') %>"><%= item.get('description') %></a></li>
+    <div class="content clipboard-item-list"></div>
     
-    <li>
-    <% if(item.filetype == "photo") { %>
-    <img src="<%= item.url %>" alt="<%= item.filename %>" title="<%= item.title %>" style="width:150px"><br>
-    <% } /*end If*/ %>
+    Ansicht: 
+    <a href="#" class="on-style" data-style="list">Liste</a>
+    <a href="#" class="on-style" data-style="thumbs">Thumbnails</a>
+    
+	  </div>
+    <div class="large-6 columns itemdetails">
+    </div>
+    </script>
+    
+    
+    <script type="text/x-handlebars" id="template-clipboardItemDetails">
     
     <%= item.filename %>
+    
+    <div class="item-content" style="background: #333; padding: 10px; min-height: 400px; max-height: 800px;">
+    <% if(item.filetype == "photo") { %>
+    <img src="http://u.dropme.de<%= item.server_filespec %>" alt="<%= item.filename %>" title="<%= item.title %>" style="max-width:450px"><br>
+    <% } /*end If*/ %>
+    
+    </div>
+    
+    </script>
+    
+    
+    <script type="text/x-handlebars" id="template-clipboardItem">
+    
+    <li data-cid="<%= item.id %>" class="<%= item.active ? 'current' : '' %>">
+    <% if(item.filetype == "photo") { %>
+    <img src="/api/v1/item/<%= item.id %>/400.jpg" alt="<%= item.filename %>" title="<%= item.title %>" style="width:150px"><br>
+    <% } /*end If*/ %>
+    
+    <div><%= item.filename %></div>
     </li>
-    <% }); /*end Each*/ %>
     </script>
     
     <script type="text/x-template" id="template-sessionNew">
@@ -175,7 +194,21 @@
     </script>
     
     <script type="text/x-handlebars" id="template-dashboard">
-      
+      <div class="row">
+        <div class="large-3 columns">
+        <h3>Clipboards</h2>
+        <ul class="side-nav clipboard-list">
+          
+        </ul>
+
+    	  </div> 
+        <div class="large-3 columns">
+        <div class="cliplist"></div>
+    	  </div>
+        <div class="large-6 columns">
+        <div class="clipcontent"></div>
+    	  </div>
+      </div>
     </script>
     <script type="text/x-handlebars" id="template-indexNologin">
 

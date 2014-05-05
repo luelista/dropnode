@@ -12,6 +12,8 @@ exports.db = {
 };
 
 exports.server = {
+  https_cert: '/etc/ssl/certs/dropnode.example.net.crt',
+  https_key: '/etc/ssl/private/dropnode.example.net.key',
   app_host: 'app.dropnode.example.net',
   contents_host: 'dat.dropnode.example.net',
   contents_path: '/tmp/dropnode_contents'
@@ -23,11 +25,11 @@ exports.security = {
 };
 
 exports.schemas = {
-  CLIPBOARDS: 'clipboards',
-  COMMENTS: 'comments',
-  BOOKMARKS: 'bookmarks',
-  INVITES: 'invites',
-  ITEMS: 'clipitems',
-  EVENTS: 'events',
-  USERS: 'users'
-};
+    CLIPBOARDS: 'clipboard',
+    COMMENTS: 'clipcomment',
+    BOOKMARKS: 'clipfav',
+    INVITES: 'clipinvite',
+    ITEMS: 'clipitem',
+    EVENTS: 'clipevent',
+    USERS: 'users'
+  };

@@ -1,0 +1,19 @@
+
+.clipboard-item-list { overflow-y: auto; border: 1px solid #999; }
+.clipboard-item-list li { list-style-type: none; padding: 10px; margin: 0;  }
+.clipboard-item-list li img { max-height: 170px; }
+.clipboard-item-list li:hover { background-color: #ddd; }
+.clipboard-item-list li.current { background-color: rgb(86,152,206); }
+
+.clipboard-item-list li div {  }
+
+.clipboard-item-list[data-style=thumbs] li img { max-width: 170px; }
+.clipboard-item-list[data-style=thumbs] {  }
+.clipboard-item-list[data-style=thumbs] li { float: left; width: 200px; height: 200px; }
+.clipboard-item-list[data-style=thumbs] li div { font-size: 9pt; 
+	width: 180px;
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	/* for good looks */
+	padding: 4px 0; }

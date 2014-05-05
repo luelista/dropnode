@@ -2,11 +2,22 @@
 window.Dropme = { Models: {}, App: null };
 
 var ApplicationModel = Backbone.Model.extend({
-  currentUser: null,
-  session: null,
-  currentRoute: '',
-  clipboards: null,
-  
+  defaults: {
+    currentUser: null,
+    session: null,
+    currentRoute: '',
+    clipboards: null,
+    breadCrumb: [],
+  },
+  setBreadcrumb: function(index, data) {
+    var ar = this.get('breadCrumb');
+    if (typeof index == "number") {
+      ar[index] = data;
+    } else {
+      ar = data;
+    }
+    this.attributes.breadCrumb = null; this.set('breadCrumb', ar);
+  },
   logout: function() {
     this.set('session', null);
     this.set('currentUser', null);
@@ -27,7 +38,7 @@ var ApplicationModel = Backbone.Model.extend({
       var user = new Dropme.User({ id: session.user_id });
       user.fetch({success:function() {
         App.set('currentUser', user);
-        App.clipboards.fetch();
+        App.clipboards.fetch({url: '/api/v1/my/tags/fav'});
         callback();
       }});
     }
@@ -77,7 +88,7 @@ Dropme.WorkspaceRouter = Backbone.Router.extend({
 
   routes: {
     "":                     "index",
-    "c/:user/:board":             "clipboard_contents",
+    "c/:user/:board":       "clipboard_contents",
     "new":                  "clipboard_new",    
     "session/new":          "session_new",
     "user/:username":       "user_profile",

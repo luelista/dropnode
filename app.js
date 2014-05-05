@@ -9,22 +9,16 @@ var express = require('express')
   , http = require('http')
   , https = require('https')
   , path = require('path')
-  , mysql = require('mysql')
   , hash = require('./modules/hash')
-  , config = require('./config.js');
+  , config = require('./config.js')
+  , clipboards = require('./models/clipboard')
+  , items = require('./models/item')
+  , db = require('dbconnect')
+  , fs = require('fs');
 
-var SCH = {};
-for (var k in config.schemas) {
-  if (config.schemas.hasOwnProperty(k)) SCH[k] = config.db.prefix + config.schemas[k];
-}
 
 var app = express();
 var contentsApp = express();
-
-config.db.multipleStatements = true;
-var connection = mysql.createConnection(config.db);
-
-connection.connect(function(err) {  });
 
 app.configure(function(){
   app.set('port', process.env.PORT || config.server.http_port || 3000);
@@ -49,7 +43,7 @@ app.configure('development', function(){
 
 app.post('/api/v1/session', function( req, res ) {
   var pwhash = hashPassword(req.body.password);
-  connection.query('SELECT username,id FROM '+SCH.USERS+' WHERE (username = ? OR email = ?) AND password = ?',
+  db.mysql.query('SELECT username,id FROM '+db.SCH.USERS+' WHERE (username = ? OR email = ?) AND password = ?',
   [req.body.username_or_email, req.body.username_or_email, pwhash], function(err, data) {
     if (data && data.length == 1) {
       res.send({ api_key: {
@@ -70,7 +64,7 @@ app.get('/api/v1/users/:id', middleware.requireauth, function( req, res ) {
     res.send({ error: "forbidden" });
     return;
   }
-  connection.query('SELECT id,username,fullname,email,profile_image FROM '+SCH.USERS+' WHERE id = ? OR username = ?',
+  db.mysql.query('SELECT id,username,fullname,email,profile_image FROM '+db.SCH.USERS+' WHERE id = ? OR username = ?',
   [req.params.id, req.params.id], function(err, results) {
     if (results) {
       res.send({ user: results[0] });
@@ -81,6 +75,25 @@ app.get('/api/v1/users/:id', middleware.requireauth, function( req, res ) {
   })
 });
 
+app.get('/api/v1/my/tags/:tag', function(req, res) {
+  if (!req.authorized) {
+    res.status(403);
+    res.send({ error: "forbidden" });
+    return;
+  }
+  db.mysql.query(
+    'SELECT f.alias,f.color,c.owner username,c.description, state, viewmode, c.cbid id, name,f.tag FROM twiki_clipfav AS f INNER JOIN twiki_clipboard AS c ON \
+     f.cbid=c.cbid WHERE c.deleted=0 AND f.uid = ? AND f.tag = ?', [ req.authorized.id, req.params.tag ],
+    function(err, results) {
+      if (err) { res.status(500); res.send({error: err}); return; }
+      for(var i in results) {
+        results[i].links = {items: '/api/v1/clipboards/'+results[i].id+'/items'};
+      }
+      res.send({ clipboards: results });
+    }
+  );
+});
+
 app.get('/api/v1/clipboards', function(req, res) {
   if (!req.authorized) {
     res.send({ clipboards: [], users: [] });
@@ -88,26 +101,24 @@ app.get('/api/v1/clipboards', function(req, res) {
   }
   var whereClause = 'owner = ? OR accepted_username = ?', whereParms = [req.authorized.username, req.authorized.username];
   if (req.query.owner && req.query.name) {
-    whereClause = 'owner = ? AND name = ?'; whereParms = [req.query.owner, req.query.name];
+    whereClause = 'owner = ? AND name = ? AND (state > 1 OR owner = ? OR accepted_username = ?)'; whereParms = [req.query.owner, req.query.name, req.authorized.username, req.authorized.username];
+  } else if (req.query.owner) {
+    whereClause = 'owner = ? AND (state > 1 OR owner = ? OR accepted_username = ?)'; whereParms = [req.query.owner, req.authorized.username, req.authorized.username];
   }
-  connection.query(
+  db.mysql.query(
     'SELECT \
        c.cbid id, name, u.id owner, u.username, u.fullname, c.description, state, viewmode  \
-     FROM '+SCH.CLIPBOARDS+' c INNER JOIN '+SCH.USERS+' u ON c.owner=u.username \
-       LEFT OUTER JOIN '+SCH.INVITES+' i ON c.cbid = i.cbid \
+     FROM '+db.SCH.CLIPBOARDS+' c INNER JOIN '+db.SCH.USERS+' u ON c.owner=u.username \
+       LEFT OUTER JOIN '+db.SCH.INVITES+' i ON c.cbid = i.cbid \
      WHERE ('+whereClause+') ORDER BY created DESC', 
       whereParms,
     function(err, results) {
       if (err) { res.status(500); res.send({error: err}); return; }
       console.log("sending ",err)
-      var users = [];
       for(var i in results) {
-        users.push({ id: results[i].owner, username: results[i].username, fullname: results[i].fullname });
-        delete results[i].username;
-        delete results[i].fullname;
         results[i].links = {items: '/api/v1/clipboards/'+results[i].id+'/items'};
       }
-      res.send({ clipboards: results, users: users });
+      res.send({ clipboards: results });
     }
   );
 });
@@ -117,19 +128,19 @@ app.get('/api/v1/clipboard/:owner/:name', function(req, res) {
     res.send({ error : "forbidden" });
     return;
   }
-  connection.query(
+  db.mysql.query(
     'SELECT \
        cbid id, name, u.id owner, description, state, viewmode  \
-     FROM '+SCH.CLIPBOARDS+' c INNER JOIN '+SCH.USERS+' u ON c.owner=u.username \
+     FROM '+db.SCH.CLIPBOARDS+' c INNER JOIN '+db.SCH.USERS+' u ON c.owner=u.username \
      WHERE owner = ? AND name = ? ', 
       [req.params.owner, req.params.name],
     function(err, clipboardr) {
       if (err) { res.status(500); res.send({error: err}); return; } 
       
       
-      connection.query(
+      db.mysql.query(
         'SELECT cid id, title,filename,url_filename,server_filespec,created_by,created,lastmodified_by,lastmodified,filetype,subtype,filesize \
-         FROM '+SCH.ITEMS+' WHERE cbid = ? AND deleted = 0 ORDER BY created DESC ', 
+         FROM '+db.SCH.ITEMS+' WHERE cbid = ? AND deleted = 0 ORDER BY created DESC ', 
         [clipboardr[0].id],
         function(err, itemsr) {
           if (err) { res.status(500); res.send({error: err}); return; } 
@@ -143,24 +154,77 @@ app.get('/api/v1/clipboard/:owner/:name', function(req, res) {
   );
 });
 */
+
 app.get('/api/v1/clipboards/:id/items', function(req, res) {
   if (!req.authorized) {
     res.send({ error : "forbidden" });
     return;
   }
-      
-      connection.query(
-        'SELECT cid id, title,filename,url_filename,server_filespec,created_by,created,lastmodified_by,lastmodified,filetype,subtype,filesize \
-         FROM '+SCH.ITEMS+' WHERE cbid = ? AND deleted = 0 ORDER BY created DESC ', 
-        [req.params.id],
-        function(err, itemsr) {
-          if (err) { res.status(500); res.send({error: err}); return; } 
-          
-          res.send({ items: itemsr });
-        }
-      );
-      
+  clipboards.byId(req.authorized.username, req.params.id, function(err, cb) {
+    if (err || !cb) {
+      res.send({ error : err ? err : "not found" });
+    }
+    db.mysql.query(
+      'SELECT cid id, title,filename,url_filename,server_filespec,created_by,created,lastmodified_by,lastmodified,filetype,subtype,filesize \
+       FROM '+db.SCH.ITEMS+' WHERE cbid = ? AND deleted = 0 ORDER BY created DESC ', 
+      [req.params.id],
+      function(err, itemsr) {
+        if (err) { res.status(500); res.send({error: err}); return; } 
+        
+        res.send({ items: itemsr });
+      }
+    );
+  });
 });
+
+app.get('/api/v1/item/:id/raw', function(req, res) {
+  items.byId(req.params.id, function(err, item) {
+    if (err || !item) {
+      res.send({ error : err ? err : "item not found" }); return;
+    }
+    clipboards.byId(req.authorized ? req.authorized.username : false, item.cbid, function(err, cb) {
+      if (err || !cb) {
+        res.send({ error : err ? err : "not found" }); return;
+      }
+      res.sendfile(items.getItemFilespec(item));
+    });
+  });
+});
+
+app.get('/api/v1/item/:id/:size.jpg', function(req, res) {
+  items.byId(req.params.id, function(err, item) {
+    if (err || !item) {
+      res.send({ error : err ? err : "item not found" }); return;
+    }
+    clipboards.byId(req.authorized ? req.authorized.username : false, item.cbid, function(err, cb) {
+      if (err || !cb) {
+        res.send({ error : err ? err : "not found" }); return;
+      }
+      var size = parseInt(req.params.size);
+      var dir = path.dirname(items.getItemFilespec(item));
+      res.header('Cache-Control', 'public, max-age=368400');
+      res.sendfile(dir + '/thumb' + size + '.jpg');
+    });
+  });
+});
+
+app.get('/api/v1/item/:id/plaintext', function(req, res) {
+  items.byId(req.params.id, function(err, item) {
+    if (err || !item) {
+      res.send({ error : err ? err : "item not found" }); return;
+    }
+    clipboards.byId(req.authorized ? req.authorized.username : false, item.cbid, function(err, cb) {
+      if (err || !cb) {
+        res.send({ error : err ? err : "not found" }); return;
+      }
+      fs.readFile(items.getItemFilespec(item), function(err, content) {
+        res.type('text/plain');
+        res.send(content);
+      });
+    });
+  });
+});
+
 app.get('/api/v1/nodeconfig', function(req, res) {
   var conf = {
       contents_root: 'https://' + config.server.contents_host
